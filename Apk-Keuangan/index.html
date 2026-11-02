@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dompetku - Aplikasi Pengaturan Keuangan</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for visualization -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Poppins', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 via-sky-50 to-emerald-50 min-h-screen text-slate-800 antialiased pb-12">
+
+    <!-- Navbar -->
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-100 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-lg shadow-indigo-200">
+                    <i class="fa-solid fa-wallet text-lg"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg text-slate-800 leading-tight">Dompetku</h1>
+                    <p class="text-xs text-slate-500">Atur Keuangan Jadi Lebih Seru</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="openTab('dashboard')" id="nav-dashboard" class="px-4 py-2 rounded-xl text-sm font-semibold transition-all bg-indigo-600 text-white shadow-md shadow-indigo-100">
+                    <i class="fa-solid fa-chart-pie mr-1.5"></i> Dashboard
+                </button>
+                <button onclick="openTabonMobile('riwayat')" id="nav-riwayat" class="px-4 py-2 rounded-xl text-sm font-semibold transition-all bg-white text-slate-600 hover:bg-slate-100">
+                    <i class="fa-solid fa-clock-rotate-left mr-1.5"></i> Riwayat
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+        
+        <!-- Total Wealth Banner -->
+        <div class="relative overflow-hidden bg-gradient-to-r from-indigo-600 via-violet-600 to-pink-600 rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-indigo-100 mb-8">
+            <div class="absolute -right-10 -bottom-10 w-60 h-60 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <p class="text-indigo-100 font-medium text-sm sm:text-base flex items-center gap-2">
+                        <i class="fa-solid fa-vault"></i> Total Saldo Keseluruhan
+                    </p>
+                    <h2 id="total-wealth" class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight mt-1">Rp 0</h2>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="openModal('incomeModal')" class="bg-white/20 hover:bg-white/30 backdrop-blur-md px-4 py-2.5 rounded-2xl font-medium text-sm transition-all border border-white/25 flex items-center gap-2">
+                        <i class="fa-solid fa-circle-plus text-emerald-300"></i> Catat Pemasukan
+                    </button>
+                    <button onclick="openModal('expenseModal')" class="bg-white text-indigo-900 hover:bg-indigo-50 px-4 py-2.5 rounded-2xl font-semibold text-sm transition-all shadow-lg flex items-center gap-2">
+                        <i class="fa-solid fa-circle-minus text-rose-500"></i> Catat Pengeluaran
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wallets Grid -->
+        <div class="mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-credit-card text-indigo-600"></i> Saldo Dompet & Rekening
+                </h3>
+                <div class="flex items-center gap-3">
+                    <button onclick="openModal('addWalletModal')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-xl font-medium text-xs transition-all flex items-center gap-1.5 border border-indigo-100">
+                        <i class="fa-solid fa-plus text-[10px]"></i> Tambah Saldo Baru
+                    </button>
+                    <span class="text-xs text-slate-500 hidden sm:inline">Klik saldo untuk edit</span>
+                </div>
+            </div>
+            <div id="wallets-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+                <!-- Wallet cards will be injected by JS -->
+            </div>
+        </div>
+
+        <!-- Two Column Layout: Actions/Charts & History -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Left Column: Quick Actions & Charts -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Action Buttons Card -->
+                <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                    <h4 class="font-bold text-slate-800 mb-4 text-base">Aksi Cepat</h4>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button onclick="openModal('incomeModal')" class="p-4 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-all flex flex-col items-center text-center gap-2 border border-emerald-100">
+                            <div class="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-200">
+                                <i class="fa-solid fa-arrow-down"></i>
+                            </div>
+                            <span class="font-semibold text-xs sm:text-sm">Pemasukan</span>
+                        </button>
+                        <button onclick="openModal('expenseModal')" class="p-4 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 transition-all flex flex-col items-center text-center gap-2 border border-rose-100">
+                            <div class="w-10 h-10 rounded-full bg-rose-500 text-white flex items-center justify-center shadow-md shadow-rose-200">
+                                <i class="fa-solid fa-arrow-up"></i>
+                            </div>
+                            <span class="font-semibold text-xs sm:text-sm">Pengeluaran</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Expense Chart -->
+                <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+                    <h4 class="font-bold text-slate-800 mb-4 text-base">Proporsi Pengeluaran</h4>
+                    <div class="relative h-64 flex items-center justify-center">
+                        <canvas id="expenseChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Transaction History -->
+            <div class="lg:col-span-2 bg-white rounded-3xl p-6 shadow-sm border border-slate-100 flex flex-col h-[650px]">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                        <i class="fa-solid fa-list-ul text-indigo-600"></i> Riwayat Transaksi Terbaru
+                    </h4>
+                    <button onclick="clearHistory()" class="text-xs text-rose-500 hover:text-rose-700 font-medium">Reset Data</button>
+                </div>
+                <div id="transaction-list" class="overflow-y-auto custom-scrollbar flex-grow space-y-3 pr-1">
+                    <!-- Transactions injected here -->
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- MODAL: CATAT PEMASUKAN -->
+    <div id="incomeModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 transform transition-all">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-plus text-emerald-500"></i> Tambah Pemasukan
+                </h3>
+                <button onclick="closeModal('incomeModal')" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="incomeForm" onsubmit="handleIncomeSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Jumlah (Rp)</label>
+                    <input type="number" id="incomeAmount" required min="1" placeholder="Contoh: 150000" class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Masuk Ke Saldo</label>
+                    <select id="incomeWallet" required class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
+                        <!-- Options filled via JS -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal</label>
+                    <input type="date" id="incomeDate" required class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Catatan Tambahan</label>
+                    <textarea id="incomeNote" rows="2" placeholder="Gaji bulanan, uang saku, dll..." class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"></textarea>
+                </div>
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="closeModal('incomeModal')" class="w-1/2 py-3 rounded-2xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all">Batal</button>
+                    <button type="submit" class="w-1/2 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm shadow-lg shadow-emerald-200 transition-all">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: CATAT PENGELUARAN -->
+    <div id="expenseModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 transform transition-all max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-minus text-rose-500"></i> Tambah Pengeluaran
+                </h3>
+                <button onclick="closeModal('expenseModal')" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="expenseForm" onsubmit="handleExpenseSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Jumlah (Rp)</label>
+                    <input type="number" id="expenseAmount" required min="1" placeholder="Contoh: 25000" class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Sumber Pengeluaran</label>
+                    <select id="expenseWallet" required class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500 text-sm">
+                        <!-- Options filled via JS -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Kategori</label>
+                    <select id="expenseCategory" onchange="checkCustomCategory(this.value)" required class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500 text-sm">
+                        <option value="Makan pokok">Makan pokok</option>
+                        <option value="Jajan">Jajan</option>
+                        <option value="Transport">Transport</option>
+                        <option value="Pulsa">Pulsa</option>
+                        <option value="Topup Game">Topup Game</option>
+                        <option value="Permintaan ayah">Permintaan ayah</option>
+                        <option value="Permintaan Ibu">Permintaan Ibu</option>
+                        <option value="Permintaan kakak">Permintaan kakak</option>
+                        <option value="Lainnya">Lainnya (Isi sendiri)</option>
+                    </select>
+                </div>
+                <div id="customCategoryContainer" class="hidden">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Kategori Lainnya</label>
+                    <input type="text" id="customCategoryInput" placeholder="Tulis kategori..." class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Tanggal</label>
+                    <input type="date" id="expenseDate" required class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Catatan Tambahan</label>
+                    <textarea id="expenseNote" rows="2" placeholder="Beli bakso, bensin, dll..." class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-rose-500 text-sm"></textarea>
+                </div>
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="closeModal('expenseModal')" class="w-1/2 py-3 rounded-2xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all">Batal</button>
+                    <button type="submit" class="w-1/2 py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm shadow-lg shadow-rose-200 transition-all">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: EDIT SALDO -->
+    <div id="editWalletModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square text-indigo-500"></i> Atur Saldo <span id="editWalletName" class="text-indigo-600"></span>
+                </h3>
+                <button onclick="closeModal('editWalletModal')" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form onsubmit="handleEditWalletSubmit(event)" class="space-y-4">
+                <input type="hidden" id="editWalletKey">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Jumlah Saldo Baru (Rp)</label>
+                    <input type="number" id="editWalletAmount" required min="0" class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                </div>
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="closeModal('editWalletModal')" class="w-1/2 py-3 rounded-2xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all">Batal</button>
+                    <button type="submit" class="w-1/2 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-lg shadow-indigo-200 transition-all">Perbarui</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: TAMBAH SUMBER SALDO BARU -->
+    <div id="addWalletModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-plus text-indigo-500"></i> Sumber Saldo Baru
+                </h3>
+                <button onclick="closeModal('addWalletModal')" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="addWalletForm" onsubmit="handleAddWalletSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Sumber Saldo</label>
+                    <input type="text" id="newWalletName" required placeholder="Contoh: ShopeePay, Crypto, dll" class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Saldo Awal (Rp)</label>
+                    <input type="number" id="newWalletBalance" required min="0" placeholder="0" value="0" class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                </div>
+                <div class="pt-2 flex gap-3">
+                    <button type="button" onclick="closeModal('addWalletModal')" class="w-1/2 py-3 rounded-2xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all">Batal</button>
+                    <button type="submit" class="w-1/2 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-lg shadow-indigo-200 transition-all">Tambah</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Custom Notification Popup (No alert()) -->
+    <div id="notificationToast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div id="toastContent" class="bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3 text-sm font-medium">
+            <i id="toastIcon" class="fa-solid fa-check-circle text-emerald-400 text-lg"></i>
+            <span id="toastMessage">Berhasil menyimpan data!</span>
+        </div>
+    </div>
+
+    <script>
+        // Initial Data Structure
+        let defaultWallets = {
+            'BTN': { name: 'BTN', balance: 0, icon: 'fa-building-columns', color: 'from-cyan-500 to-blue-600', bg: 'bg-cyan-50', text: 'text-cyan-600' },
+            'BNI': { name: 'BNI', balance: 0, icon: 'fa-landmark', color: 'from-orange-500 to-amber-600', bg: 'bg-amber-50', text: 'text-amber-600' },
+            'BCA': { name: 'BCA', balance: 0, icon: 'fa-university', color: 'from-blue-600 to-indigo-700', bg: 'bg-blue-50', text: 'text-blue-600' },
+            'Dana': { name: 'Dana', balance: 0, icon: 'fa-wallet', color: 'from-sky-400 to-blue-500', bg: 'bg-sky-50', text: 'text-sky-600' },
+            'Gopay': { name: 'Gopay', balance: 0, icon: 'fa-mobile-screen-button', color: 'from-emerald-500 to-teal-600', bg: 'bg-emerald-50', text: 'text-emerald-600' },
+            'Dompet/Cash': { name: 'Dompet/Cash', balance: 0, icon: 'fa-money-bill-wave', color: 'from-violet-500 to-purple-600', bg: 'bg-purple-50', text: 'text-purple-600' }
+        };
+
+        let wallets = JSON.parse(localStorage.getItem('dompetku_wallets')) || defaultWallets;
+        let transactions = JSON.parse(localStorage.getItem('dompetku_transactions')) || [];
+        let expenseChartInstance = null;
+
+        // Initialize App on Load
+        window.onload = function() {
+            // Set current date in inputs
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('incomeDate').value = today;
+            document.getElementById('expenseDate').value = today;
+
+            renderWallets();
+            renderTransactions();
+            updateWalletSelects();
+            renderChart();
+        };
+
+        // Save to LocalStorage
+        function saveData() {
+            localStorage.setItem('dompetku_wallets', JSON.stringify(wallets));
+            localStorage.setItem('dompetku_transactions', JSON.stringify(transactions));
+        }
+
+        // Format Currency IDR
+        function formatRupiah(amount) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount);
+        }
+
+        // Render Wallets & Total Wealth
+        function renderWallets() {
+            const grid = document.getElementById('wallets-grid');
+            grid.innerHTML = '';
+            let totalWealth = 0;
+
+            for (const [key, wallet] of Object.entries(wallets)) {
+                totalWealth += wallet.balance;
+                
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-3xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden group`;
+                card.onclick = () => openEditWalletModal(key);
+                
+                // Allow deleting custom wallets if they are not the default ones
+                const isDefault = ['BTN', 'BNI', 'BCA', 'Dana', 'Gopay', 'Dompet/Cash'].includes(key);
+                
+                card.innerHTML = `
+                    <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${wallet.color || 'from-indigo-500 to-purple-600'} opacity-5 rounded-bl-full pointer-events-none group-hover:opacity-10 transition-opacity"></div>
+                    <div>
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="w-10 h-10 rounded-2xl ${wallet.bg || 'bg-indigo-50'} ${wallet.text || 'text-indigo-600'} flex items-center justify-center text-base shadow-sm">
+                                <i class="fa-solid ${wallet.icon || 'fa-wallet'}"></i>
+                            </div>
+                            ${!isDefault ? `<button onclick="event.stopPropagation(); deleteWallet('${key}')" class="text-slate-300 hover:text-rose-500 text-xs p-1" title="Hapus Sumber Saldo"><i class="fa-solid fa-trash"></i></button>` : ''}
+                        </div>
+                        <h4 class="font-semibold text-slate-700 text-xs sm:text-sm truncate">${wallet.name}</h4>
+                    </div>
+                    <div class="mt-3">
+                        <p class="font-bold text-slate-900 text-sm sm:text-base truncate">${formatRupiah(wallet.balance)}</p>
+                        <span class="text-[10px] text-indigo-500 font-medium flex items-center gap-1 mt-0.5">
+                            <i class="fa-solid fa-pen text-[9px]"></i> Ubah Saldo
+                        </span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            }
+
+            document.getElementById('total-wealth').innerText = formatRupiah(totalWealth);
+        }
+
+        // Handle Add Custom Wallet
+        function handleAddWalletSubmit(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('newWalletName').value.trim();
+            const balanceInput = parseFloat(document.getElementById('newWalletBalance').value) || 0;
+
+            if (!nameInput) return;
+
+            // Generate unique key based on name
+            const key = nameInput.replace(/[^a-zA-Z0-9]/g, '_');
+
+            if (wallets[key]) {
+                showToast('Sumber saldo dengan nama tersebut sudah ada!', 'rose');
+                return;
+            }
+
+            // Random stylish colors for custom wallets
+            const colorPalettes = [
+                { color: 'from-pink-500 to-rose-600', bg: 'bg-pink-50', text: 'text-pink-600', icon: 'fa-piggy-bank' },
+                { color: 'from-violet-500 to-indigo-600', bg: 'bg-violet-50', text: 'text-violet-600', icon: 'fa-vault' },
+                { color: 'from-amber-500 to-yellow-600', bg: 'bg-amber-50', text: 'text-amber-600', icon: 'fa-coins' },
+                { color: 'from-teal-500 to-emerald-600', bg: 'bg-teal-50', text: 'text-teal-600', icon: 'fa-sack-dollar' }
+            ];
+            const randomPalette = colorPalettes[Math.floor(Math.random() * colorPalettes.length)];
+
+            wallets[key] = {
+                name: nameInput,
+                balance: balanceInput,
+                icon: randomPalette.icon,
+                color: randomPalette.color,
+                bg: randomPalette.bg,
+                text: randomPalette.text
+            };
+
+            saveData();
+            renderWallets();
+            updateWalletSelects();
+            closeModal('addWalletModal');
+            document.getElementById('addWalletForm').reset();
+            showToast(`Sumber saldo "${nameInput}" berhasil ditambahkan!`, 'emerald');
+        }
+
+        // Delete Custom Wallet
+        function deleteWallet(key) {
+            if (confirm(`Yakin ingin menghapus sumber saldo "${wallets[key].name}"? Pastikan tidak ada transaksi terkait.`)) {
+                delete wallets[key];
+                saveData();
+                renderWallets();
+                updateWalletSelects();
+                showToast('Sumber saldo berhasil dihapus.', 'amber');
+            }
+        }
+
+        // Update Wallet Select Dropdowns
+        function updateWalletSelects() {
+            const incomeWalletSelect = document.getElementById('incomeWallet');
+            const expenseWalletSelect = document.getElementById('expenseWallet');
+            
+            incomeWalletSelect.innerHTML = '';
+            expenseWalletSelect.innerHTML = '';
+
+            for (const [key, wallet] of Object.entries(wallets)) {
+                const opt1 = document.createElement('option');
+                opt1.value = key;
+                opt1.textContent = `${wallet.name} (Saldo: ${formatRupiah(wallet.balance)})`;
+                incomeWalletSelect.appendChild(opt1);
+
+                const opt2 = document.createElement('option');
+                opt2.value = key;
+                opt2.textContent = `${wallet.name} (Saldo: ${formatRupiah(wallet.balance)})`;
+                expenseWalletSelect.appendChild(opt2);
+            }
+        }
+
+        // Render Transaction History
+        function renderTransactions() {
+            const list = document.getElementById('transaction-list');
+            list.innerHTML = '';
+
+            if (transactions.length === 0) {
+                list.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-full text-slate-400 py-12">
+                        <i class="fa-solid fa-receipt text-4xl mb-3 text-slate-300"></i>
+                        <p class="text-sm font-medium">Belum ada transaksi tercatat</p>
+                        <p class="text-xs text-slate-400">Yuk mulai catat keuanganmu!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Sort by date descending
+            const sortedTransactions = [...transactions].reverse();
+
+            sortedTransactions.forEach((tx, index) => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 hover:bg-slate-100/80 transition-all border border-slate-100/60';
+                
+                const isIncome = tx.type === 'income';
+                const sign = isIncome ? '+' : '-';
+                const colorClass = isIncome ? 'text-emerald-600 bg-emerald-100' : 'text-rose-600 bg-rose-100';
+                const iconClass = isIncome ? 'fa-arrow-down' : 'fa-arrow-up';
+
+                // Format date nice
+                const dateObj = new Date(tx.date);
+                const options = { day: 'numeric', month: 'short', year: 'numeric' };
+                const formattedDate = dateObj.toLocaleDateString('id-ID', options);
+
+                item.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-2xl ${colorClass} flex items-center justify-center shrink-0">
+                            <i class="fa-solid ${iconClass}"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h5 class="font-semibold text-xs sm:text-sm text-slate-800">${isIncome ? 'Pemasukan' : tx.category}</h5>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 text-slate-700 font-medium">${tx.wallet}</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 mt-0.5">${formattedDate} ${tx.note ? '• ' + tx.note : ''}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="font-bold text-xs sm:text-sm ${isIncome ? 'text-emerald-600' : 'text-slate-800'}">${sign} ${formatRupiah(tx.amount)}</span>
+                        <div>
+                            <button onclick="deleteTransaction(${tx.id})" class="text-[10px] text-rose-500 hover:underline">Hapus</button>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        }
+
+        // Render Chart
+        function renderChart() {
+            const ctx = document.getElementById('expenseChart').getContext('2d');
+            
+            // Calculate totals per category
+            let categoryTotals = {};
+            transactions.filter(t => t.type === 'expense').forEach(t => {
+                categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount;
+            });
+
+            const labels = Object.keys(categoryTotals);
+            const data = Object.values(categoryTotals);
+
+            if (expenseChartInstance) {
+                expenseChartInstance.destroy();
+            }
+
+            if (labels.length === 0) {
+                // Render empty state chart or placeholder text
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                ctx.font = '12px Poppins';
+                ctx.fillStyle = '#94a3b8';
+                ctx.textAlign = 'center';
+                ctx.fillText('Belum ada data pengeluaran', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                return;
+            }
+
+            expenseChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#6366f1', '#ec4899', '#f59e0b', '#10b981', 
+                            '#3b82f6', '#8b5cf6', '#f43f5e', '#14b8a6', '#64748b'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                font: {
+                                    family: 'Poppins',
+                                    size: 11
+                                }
+                            }
+                        }
+                    },
+                    cutout: '65%'
+                }
+            });
+        }
+
+        // Handle Income Submission
+        function handleIncomeSubmit(e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('incomeAmount').value);
+            const wallet = document.getElementById('incomeWallet').value;
+            const date = document.getElementById('incomeDate').value;
+            const note = document.getElementById('incomeNote').value;
+
+            if (!wallets[wallet]) return;
+
+            // Update balance
+            wallets[wallet].balance += amount;
+
+            // Record transaction
+            const newTx = {
+                id: Date.now(),
+                type: 'income',
+                amount: amount,
+                wallet: wallet,
+                date: date,
+                note: note
+            };
+            transactions.push(newTx);
+
+            saveData();
+            renderWallets();
+            renderTransactions();
+            updateWalletSelects();
+            renderChart();
+            closeModal('incomeModal');
+            document.getElementById('incomeForm').reset();
+            
+            // Reset date to today
+            document.getElementById('incomeDate').value = new Date().toISOString().split('T')[0];
+            showToast('Pemasukan berhasil dicatat!', 'emerald');
+        }
+
+        // Handle Expense Submission
+        function handleExpenseSubmit(e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('expenseAmount').value);
+            const wallet = document.getElementById('expenseWallet').value;
+            let category = document.getElementById('expenseCategory').value;
+            if (category === 'Lainnya') {
+                const customCat = document.getElementById('customCategoryInput').value.trim();
+                if (customCat) category = customCat;
+            }
+            const date = document.getElementById('expenseDate').value;
+            const note = document.getElementById('expenseNote').value;
+
+            if (!wallets[wallet]) return;
+
+            // Check if sufficient balance (optional check or allow negative)
+            wallets[wallet].balance -= amount;
+
+            // Record transaction
+            const newTx = {
+                id: Date.now(),
+                type: 'expense',
+                amount: amount,
+                wallet: wallet,
+                category: category,
+                date: date,
+                note: note
+            };
+            transactions.push(newTx);
+
+            saveData();
+            renderWallets();
+            renderTransactions();
+            updateWalletSelects();
+            renderChart();
+            closeModal('expenseModal');
+            document.getElementById('expenseForm').reset();
+            document.getElementById('customCategoryContainer').classList.add('hidden');
+            
+            // Reset date to today
+            document.getElementById('expenseDate').value = new Date().toISOString().split('T')[0];
+            showToast('Pengeluaran berhasil dicatat & saldo terpotong!', 'rose');
+        }
+
+        // Handle Edit Wallet Balance Submission
+        function handleEditWalletSubmit(e) {
+            e.preventDefault();
+            const key = document.getElementById('editWalletKey').value;
+            const newAmount = parseFloat(document.getElementById('editWalletAmount').value);
+
+            if (wallets[key]) {
+                wallets[key].balance = newAmount;
+                saveData();
+                renderWallets();
+                updateWalletSelects();
+                closeModal('editWalletModal');
+                showToast(`Saldo ${wallets[key].name} berhasil diperbarui!`, 'indigo');
+            }
+        }
+
+        // Delete Transaction
+        function deleteTransaction(id) {
+            const txIndex = transactions.findIndex(t => t.id === id);
+            if (txIndex > -1) {
+                const tx = transactions[txIndex];
+                // Revert balance change
+                if (tx.type === 'income') {
+                    wallets[tx.wallet].balance -= tx.amount;
+                } else {
+                    wallets[tx.wallet].balance += tx.amount;
+                }
+
+                transactions.splice(txIndex, 1);
+                saveData();
+                renderWallets();
+                renderTransactions();
+                updateWalletSelects();
+                renderChart();
+                showToast('Transaksi berhasil dihapus & saldo dikembalikan.', 'amber');
+            }
+        }
+
+        // Clear All History
+        function clearHistory() {
+            if (confirm('Yakin ingin mereset seluruh riwayat transaksi? Saldo dompet tidak akan diubah.')) {
+                transactions = [];
+                saveData();
+                renderTransactions();
+                renderChart();
+                showToast('Riwayat berhasil direset.', 'slate');
+            }
+        }
+
+        // Check custom category visibility
+        function checkCustomCategory(val) {
+            const container = document.getElementById('customCategoryContainer');
+            const customInput = document.getElementById('customCategoryInput');
+            if (val === 'Lainnya') {
+                container.classList.remove('hidden');
+                customInput.required = true;
+            } else {
+                container.classList.add('hidden');
+                customInput.required = false;
+            }
+        }
+
+        // Modal Controls
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function openEditWalletModal(key) {
+            const wallet = wallets[key];
+            document.getElementById('editWalletKey').value = key;
+            document.getElementById('editWalletName').textContent = wallet.name;
+            document.getElementById('editWalletAmount').value = wallet.balance;
+            openModal('editWalletModal');
+        }
+
+        // Toast Notification helper (replaces alert)
+        function showToast(message, type = 'emerald') {
+            const toast = document.getElementById('notificationToast');
+            const msgEl = document.getElementById('toastMessage');
+            const iconEl = document.getElementById('toastIcon');
+
+            msgEl.textContent = message;
+            
+            if (type === 'emerald') {
+                iconEl.className = 'fa-solid fa-circle-check text-emerald-400 text-lg';
+            } else if (type === 'rose') {
+                iconEl.className = 'fa-solid fa-circle-minus text-rose-400 text-lg';
+            } else if (type === 'indigo') {
+                iconEl.className = 'fa-solid fa-pen-to-square text-indigo-400 text-lg';
+            } else {
+                iconEl.className = 'fa-solid fa-bell text-amber-400 text-lg';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
+
+        // Navigation Tabs for Mobile View simulation if needed
+        function openTab(tabName) {
+            document.getElementById('nav-dashboard').className = 'px-4 py-2 rounded-xl text-sm font-semibold transition-all bg-indigo-600 text-white shadow-md shadow-indigo-100';
+            document.getElementById('nav-riwayat').className = 'px-4 py-2 rounded-xl text-sm font-semibold transition-all bg-white text-slate-600 hover:bg-slate-100';
+        }
+
+        function openTabonMobile(tabName) {
+            document.getElementById('nav-riwayat').className = 'px-4 py-2 rounded-xl text-sm font-semibold transition-all bg-indigo-600 text-white shadow-md shadow-indigo-100';
+            document.getElementById('nav-dashboard').className = 'px-4 py-2 rounded-xl text-sm font-semibold transition-all bg-white text-slate-600 hover:bg-slate-100';
+            // Scroll smoothly to transaction history
+            document.getElementById('transaction-list').scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
