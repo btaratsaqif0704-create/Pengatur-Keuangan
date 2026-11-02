@@ -109,7 +109,7 @@
                     <button onclick="openModal('addWalletModal')" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-xl font-medium text-xs transition-all flex items-center gap-1.5 border border-indigo-100">
                         <i class="fa-solid fa-plus text-[10px]"></i> Tambah Saldo Baru
                     </button>
-                    <span class="text-xs text-slate-500 hidden sm:inline">Klik saldo untuk edit</span>
+                    <span class="text-xs text-slate-500 hidden sm:inline">Kelola saldo sesuka hati</span>
                 </div>
             </div>
             <div id="wallets-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -266,7 +266,7 @@
         <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-slate-100">
             <div class="flex justify-between items-center mb-4">
                 <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
-                    <i class="fa-solid fa-pen-to-square text-indigo-500"></i> Atur Saldo <span id="editWalletName" class="text-indigo-600"></span>
+                    <i class="fa-solid fa-pen-to-square text-indigo-500"></i> Kelola Sumber Saldo
                 </h3>
                 <button onclick="closeModal('editWalletModal')" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center">
                     <i class="fa-solid fa-xmark"></i>
@@ -275,12 +275,16 @@
             <form onsubmit="handleEditWalletSubmit(event)" class="space-y-4">
                 <input type="hidden" id="editWalletKey">
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Jumlah Saldo Baru (Rp)</label>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Sumber Saldo</label>
+                    <input type="text" id="editWalletNameInput" required class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Jumlah Saldo (Rp)</label>
                     <input type="number" id="editWalletAmount" required min="0" class="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
                 </div>
                 <div class="pt-2 flex gap-3">
-                    <button type="button" onclick="closeModal('editWalletModal')" class="w-1/2 py-3 rounded-2xl border border-slate-200 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-all">Batal</button>
-                    <button type="submit" class="w-1/2 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-lg shadow-indigo-200 transition-all">Perbarui</button>
+                    <button type="button" onclick="deleteWalletFromModal()" class="w-1/3 py-3 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-600 font-semibold text-sm transition-all text-center">Hapus</button>
+                    <button type="submit" class="w-2/3 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-lg shadow-indigo-200 transition-all">Simpan</button>
                 </div>
             </form>
         </div>
@@ -374,9 +378,6 @@
                 card.className = `bg-white rounded-3xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between relative overflow-hidden group`;
                 card.onclick = () => openEditWalletModal(key);
                 
-                // Allow deleting custom wallets if they are not the default ones
-                const isDefault = ['BTN', 'BNI', 'BCA', 'Dana', 'Gopay', 'Dompet/Cash'].includes(key);
-                
                 card.innerHTML = `
                     <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br ${wallet.color || 'from-indigo-500 to-purple-600'} opacity-5 rounded-bl-full pointer-events-none group-hover:opacity-10 transition-opacity"></div>
                     <div>
@@ -384,14 +385,14 @@
                             <div class="w-10 h-10 rounded-2xl ${wallet.bg || 'bg-indigo-50'} ${wallet.text || 'text-indigo-600'} flex items-center justify-center text-base shadow-sm">
                                 <i class="fa-solid ${wallet.icon || 'fa-wallet'}"></i>
                             </div>
-                            ${!isDefault ? `<button onclick="event.stopPropagation(); deleteWallet('${key}')" class="text-slate-300 hover:text-rose-500 text-xs p-1" title="Hapus Sumber Saldo"><i class="fa-solid fa-trash"></i></button>` : ''}
+                            <span class="text-slate-300 group-hover:text-indigo-500 text-xs p-1 transition-colors"><i class="fa-solid fa-pen"></i></span>
                         </div>
                         <h4 class="font-semibold text-slate-700 text-xs sm:text-sm truncate">${wallet.name}</h4>
                     </div>
                     <div class="mt-3">
                         <p class="font-bold text-slate-900 text-sm sm:text-base truncate">${formatRupiah(wallet.balance)}</p>
                         <span class="text-[10px] text-indigo-500 font-medium flex items-center gap-1 mt-0.5">
-                            <i class="fa-solid fa-pen text-[9px]"></i> Ubah Saldo
+                            <i class="fa-solid fa-gear text-[9px]"></i> Kelola Sumber
                         </span>
                     </div>
                 `;
@@ -445,13 +446,23 @@
 
         // Delete Custom Wallet
         function deleteWallet(key) {
-            if (confirm(`Yakin ingin menghapus sumber saldo "${wallets[key].name}"? Pastikan tidak ada transaksi terkait.`)) {
+            if (Object.keys(wallets).length <= 1) {
+                showToast('Minimal harus menyisakan 1 sumber saldo!', 'rose');
+                return;
+            }
+            if (confirm(`Yakin ingin menghapus sumber saldo "${wallets[key].name}"?`)) {
                 delete wallets[key];
                 saveData();
                 renderWallets();
                 updateWalletSelects();
                 showToast('Sumber saldo berhasil dihapus.', 'amber');
             }
+        }
+
+        function deleteWalletFromModal() {
+            const key = document.getElementById('editWalletKey').value;
+            closeModal('editWalletModal');
+            deleteWallet(key);
         }
 
         // Update Wallet Select Dropdowns
@@ -677,17 +688,47 @@
         // Handle Edit Wallet Balance Submission
         function handleEditWalletSubmit(e) {
             e.preventDefault();
-            const key = document.getElementById('editWalletKey').value;
+            const oldKey = document.getElementById('editWalletKey').value;
+            const newName = document.getElementById('editWalletNameInput').value.trim();
             const newAmount = parseFloat(document.getElementById('editWalletAmount').value);
 
-            if (wallets[key]) {
-                wallets[key].balance = newAmount;
-                saveData();
-                renderWallets();
-                updateWalletSelects();
-                closeModal('editWalletModal');
-                showToast(`Saldo ${wallets[key].name} berhasil diperbarui!`, 'indigo');
+            if (!newName) return;
+
+            const newKey = newName.replace(/[^a-zA-Z0-9]/g, '_');
+
+            // If name changed and key already exists (and it's not the same key)
+            if (newKey !== oldKey && wallets[newKey]) {
+                showToast('Sumber saldo dengan nama tersebut sudah ada!', 'rose');
+                return;
             }
+
+            // If key changed, we need to migrate/re-key the property
+            if (newKey !== oldKey) {
+                wallets[newKey] = {
+                    ...wallets[oldKey],
+                    name: newName,
+                    balance: newAmount
+                };
+                delete wallets[oldKey];
+
+                // Also update transactions that referenced this wallet key
+                transactions.forEach(tx => {
+                    if (tx.wallet === oldKey) {
+                        tx.wallet = newKey;
+                    }
+                });
+            } else {
+                wallets[oldKey].name = newName;
+                wallets[oldKey].balance = newAmount;
+            }
+
+            saveData();
+            renderWallets();
+            renderTransactions();
+            updateWalletSelects();
+            renderChart();
+            closeModal('editWalletModal');
+            showToast(`Sumber saldo berhasil diperbarui!`, 'indigo');
         }
 
         // Delete Transaction
@@ -748,7 +789,7 @@
         function openEditWalletModal(key) {
             const wallet = wallets[key];
             document.getElementById('editWalletKey').value = key;
-            document.getElementById('editWalletName').textContent = wallet.name;
+            document.getElementById('editWalletNameInput').value = wallet.name;
             document.getElementById('editWalletAmount').value = wallet.balance;
             openModal('editWalletModal');
         }
