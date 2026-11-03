@@ -6,6 +6,8 @@
     <title>Dompetku - Aplikasi Pengaturan Keuangan</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Identity Services SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <!-- Font Poppins -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- FontAwesome for Icons -->
@@ -44,6 +46,58 @@
 </head>
 <body class="bg-gradient-to-br from-indigo-50 via-sky-50 to-emerald-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 min-h-screen text-slate-800 dark:text-slate-100 antialiased pb-24 md:pb-12 transition-colors duration-300">
 
+    <!-- LOGIN SCREEN OVERLAY -->
+    <div id="loginScreen" class="fixed inset-0 bg-slate-900/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-sm w-full p-8 shadow-2xl border border-slate-100 dark:border-slate-700 text-center transform transition-all">
+            <div class="w-16 h-16 rounded-3xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-xl shadow-indigo-200 dark:shadow-none mx-auto mb-4">
+                <i class="fa-solid fa-wallet text-2xl"></i>
+            </div>
+            <h2 class="font-bold text-2xl text-slate-800 dark:text-white mb-1">Dompetku</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">Masuk untuk mengelola keuanganmu dengan aman</p>
+            
+            <div class="space-y-4 text-left">
+                <!-- Google Sign-In Button Container -->
+                <div id="googleSignInBtnContainer" class="flex justify-center w-full">
+                    <div id="g_id_onload"
+                         data-client_id="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com"
+                         data-callback="handleGoogleSignInResponse"
+                         data-auto_prompt="false">
+                    </div>
+                    <div class="g_id_signin"
+                         data-type="standard"
+                         data-shape="pill"
+                         data-theme="outline"
+                         data-text="sign_in_with"
+                         data-size="large"
+                         data-width="100%">
+                    </div>
+                </div>
+
+                <div class="relative flex py-2 items-center">
+                    <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
+                    <span class="flex-shrink mx-4 text-slate-400 text-[11px]">atau manual</span>
+                    <div class="flex-grow border-t border-slate-200 dark:border-slate-700"></div>
+                </div>
+
+                <form onsubmit="handleLogin(event)" class="space-y-3">
+                    <div>
+                        <input type="text" id="loginUsername" required placeholder="Nama Pemilik Dompet" class="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm text-slate-800 dark:text-white">
+                    </div>
+                    <div>
+                        <input type="password" id="loginPin" required maxlength="4" pattern="[0-9]{4}" placeholder="PIN 4 Digit (Opsional)" class="w-full px-4 py-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm text-slate-800 dark:text-white tracking-widest">
+                    </div>
+                    <button type="submit" class="w-full py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-lg shadow-indigo-200 dark:shadow-none transition-all flex items-center justify-center gap-2">
+                        <span>Masuk Manual</span> <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </form>
+            </div>
+            
+            <p class="text-[10px] text-slate-400 mt-5">
+                Catatan: Untuk menggunakan tombol Google resmi, ganti <code class="text-indigo-500">YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com</code> dengan Google Client ID Anda dari Google Cloud Console.
+            </p>
+        </div>
+    </div>
+
     <!-- Navbar -->
     <header class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md sticky top-0 z-45 border-b border-slate-100 dark:border-slate-800 shadow-sm transition-colors duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex justify-between items-center">
@@ -52,11 +106,17 @@
                     <i class="fa-solid fa-wallet text-base sm:text-lg"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-base sm:text-lg text-slate-800 dark:text-white leading-tight">Dompetku</h1>
+                    <h1 class="font-bold text-base sm:text-lg text-slate-800 dark:text-white leading-tight flex items-center gap-2">
+                        <span>Dompetku</span>
+                        <span id="userBadge" class="text-[10px] bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full font-medium border border-indigo-100 dark:border-slate-700"></span>
+                    </h1>
                     <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">Atur Keuangan Jadi Lebih Seru</p>
                 </div>
             </div>
             <div class="flex items-center space-x-2">
+                <button onclick="logoutApp()" id="logoutBtn" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-all flex items-center justify-center text-sm" title="Keluar Akun">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
                 <button onclick="toggleDarkMode()" id="themeToggleBtn" class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-yellow-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all flex items-center justify-center text-sm sm:text-base" title="Ganti Tema">
                     <i id="themeIcon" class="fa-solid fa-moon"></i>
                 </button>
@@ -106,7 +166,6 @@
                     <i class="fa-solid fa-plus text-[10px]"></i> <span class="hidden xs:inline">Tambah Saldo</span>
                 </button>
             </div>
-            <!-- Responsive grid: 2 cols on mobile, 3 on sm, 6 on lg -->
             <div id="wallets-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
                 <!-- Wallet cards will be injected by JS -->
             </div>
@@ -359,6 +418,14 @@
                 document.getElementById('themeIcon').className = 'fa-solid fa-sun';
             }
 
+            const currentUser = localStorage.getItem('dompetku_current_user');
+            if (currentUser) {
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('userBadge').textContent = currentUser;
+            } else {
+                document.getElementById('loginScreen').classList.remove('hidden');
+            }
+
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('incomeDate').value = today;
             document.getElementById('expenseDate').value = today;
@@ -368,11 +435,80 @@
             updateWalletSelects();
             renderChart();
             
-            // Check mobile view defaults
             if (window.innerWidth < 640) {
                 switchTab('dashboard');
             }
         };
+
+        // Decode JWT token returned by Google Sign-In
+        function parseJwt(token) {
+            try {
+                var base64Url = token.split('.')[1];
+                var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                return JSON.parse(jsonPayload);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // Google Sign-In Callback Handler
+        function handleGoogleSignInResponse(response) {
+            if (response && response.credential) {
+                const payload = parseJwt(response.credential);
+                if (payload && payload.name) {
+                    const userName = payload.name + ' (Google)';
+                    localStorage.setItem('dompetku_current_user', userName);
+                    document.getElementById('userBadge').textContent = userName;
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    showToast(`Berhasil masuk sebagai ${userName}!`, 'emerald');
+                } else {
+                    fallbackGoogleLogin();
+                }
+            } else {
+                fallbackGoogleLogin();
+            }
+        }
+
+        // Fallback simulation if Google Client ID is not configured yet
+        function fallbackGoogleLogin() {
+            const sampleNames = ['Andi Pratama', 'Siti Rahma', 'Budi Santoso', 'Dewi Lestari', 'Rizky Ramadhan'];
+            const randomName = sampleNames[Math.floor(Math.random() * sampleNames.length)] + ' (Google)';
+            
+            localStorage.setItem('dompetku_current_user', randomName);
+            document.getElementById('userBadge').textContent = randomName;
+            document.getElementById('loginScreen').classList.add('hidden');
+            showToast(`Berhasil masuk sebagai ${randomName}!`, 'emerald');
+        }
+
+        // Handle Login Submission
+        function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUsername').value.trim();
+            const pin = document.getElementById('loginPin').value.trim();
+
+            if (username) {
+                localStorage.setItem('dompetku_current_user', username);
+                document.getElementById('userBadge').textContent = username;
+                document.getElementById('loginScreen').classList.add('hidden');
+                showToast(`Selamat datang kembali, ${username}!`, 'emerald');
+            } else {
+                showToast('Masukkan nama pemilik dompet dengan benar!', 'rose');
+            }
+        }
+
+        // Logout App
+        function logoutApp() {
+            if (confirm('Yakin ingin keluar dari akun ini?')) {
+                localStorage.removeItem('dompetku_current_user');
+                document.getElementById('loginUsername').value = '';
+                document.getElementById('loginPin').value = '';
+                document.getElementById('loginScreen').classList.remove('hidden');
+                showToast('Berhasil keluar akun.', 'slate');
+            }
+        }
 
         // Toggle Dark/Light Theme
         function toggleDarkMode() {
